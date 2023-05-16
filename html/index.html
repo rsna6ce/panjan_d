@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang='en'>
+<head>
+<meta charset='utf-8'>
+<title>PANJAN-D</title>
+<style>
+    html {font-family: Helvetica; display: inline-block; margin: 0px auto; text-align: center;}
+    .noselect {user-select: none;}
+    .button {display: inline-block; background-color: #0000FF; border: none; border-radius: 4px; padding: 16px 16px; text-decoration: none; font-size: 50px; margin: 2px; cursor: pointer;}
+</style>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+</head>
+<body>
+<center><h1>PANJAN-D</h1></center>
+ <div class='noselect'>
+ <center><table>
+  <tr>
+   <td> </td>
+   <td> <center><button type='button' class='button'
+            onmousedown="ControlButton('forward');"
+            ontouchstart="ControlButton('forward');"
+            onmouseup="ControlButton('stop');"
+            ontouchend="ControlButton('stop');">
+            &#x23eb;</button></center></td>
+   <td> </td>
+  </tr>
+  <tr>
+   <td> <center><button type='button' class='button'
+            onmousedown="ControlButton('left');"
+            ontouchstart="ControlButton('left');"
+            onmouseup="ControlButton('stop');"
+            ontouchend="ControlButton('stop');">
+            &#x23ea;</button></center></td>
+   <td> <center><button type='button' class='button'
+            onmousedown="ControlButton('stop');"
+            ontouchstart="ControlButton('stop');"
+            onmouseup="ControlButton('stop');"
+            ontouchend="ControlButton('stop');">
+            &#x23f9;</button></center></td>
+   <td> <center><button type='button' class='button'
+            onmousedown="ControlButton('right');"
+            ontouchstart="ControlButton('right');"
+            onmouseup="ControlButton('stop');"
+            ontouchend="ControlButton('stop');">
+            &#x23e9;</button></center></td>
+  </tr>
+  <tr>
+   <td> </td>
+   <td> <center><button type='button' class='button'
+            onmousedown="ControlButton('backward');"
+            ontouchstart="ControlButton('backward');"
+            onmouseup="ControlButton('stop');"
+            ontouchend="ControlButton('stop');">
+            &#x23ec;</button></center></td>
+   <td> </td>
+  </tr>
+</table></center>
+</div>
+</body>
+<script language='javascript' type='text/javascript'>
+ function ControlButton(value) {
+  var request = new XMLHttpRequest();
+  request.open('POST', 'http://{{CURRENT_IPADDR}}/api?ev=' + value, true);
+  request.responseType = 'text';
+  request.onload = function () {
+   //do nothing
+  };
+  request.onerror = function () {
+    alert('ERROR: Communication error.')
+  };
+  request.send();
+}
+</script>

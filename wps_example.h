@@ -3,7 +3,7 @@
 
 static bool wps_success = false;
 
-/******** from WPS example ********/
+/******** imported from WPS public domain example ********/
 #define ESP_WPS_MODE      WPS_TYPE_PBC
 #define ESP_MANUFACTURER  "ESPRESSIF"
 #define ESP_MODEL_NUMBER  "ESP32"
@@ -11,6 +11,7 @@ static bool wps_success = false;
 #define ESP_DEVICE_NAME   "ESP STATION"
 
 static esp_wps_config_t config;
+
 void wpsInitConfig(){
   config.wps_type = ESP_WPS_MODE;
   strcpy(config.factory_info.manufacturer, ESP_MANUFACTURER);
@@ -80,4 +81,3 @@ void WiFiEvent(WiFiEvent_t event, arduino_event_info_t info){
       break;
   }
 }
-/******** from WPS example ********/

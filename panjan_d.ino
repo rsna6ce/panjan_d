@@ -1,5 +1,7 @@
 #include <stdint.h>
 #include <WiFi.h>
+#include <WebServer.h>
+#include <ESPmDNS.h>
 #include <time.h>
 #include "mycon.h"
 #include <esp_task_wdt.h>
@@ -22,8 +24,11 @@ const int pwm_freq = 50;
 const int pwm_bit = 8;
 const int pwm_max = (1 << pwm_bit);
 const int pwm_run_percent = 100;
-const int pwm_turn_percent = 50;
+const int pwm_turn_percent = 70;
 const int pwm_spin_percent = 30;
+
+WebServer server(80);
+static String current_ipaddr = "";
 
 //3 seconds WDT
 #define WDT_TIMEOUT 3
@@ -91,7 +96,8 @@ void setup() {
     if (wifi_status == WL_CONNECTED) {
         delay(1*1000);
         Serial.println("wifi connected.");
-        Serial.println(WiFi.localIP());
+        current_ipaddr = WiFi.localIP().toString();
+        Serial.println(current_ipaddr);
         digitalWrite(pinLED, HIGH);
         delay(1*1000);
     } else {
@@ -118,14 +124,48 @@ void setup() {
     Serial.println("start finished");
     delay(100);
 
+    server.on("/", handleRoot);
+    server.on("/api",handleApi);
+    server.onNotFound(handleNotFound);
+    server.begin();
+
     //enable panic so ESP32 restarts
     esp_task_wdt_init(WDT_TIMEOUT, true); 
     esp_task_wdt_add(NULL);
 }
 
+void handleRoot() {
+    #include "index.html.h"
+    index_html.replace("{{CURRENT_IPADDR}}", current_ipaddr);
+    server.send(200, "text/HTML", index_html);
+}
+
+static String input_webapi = "";
+void handleApi() {
+    String ev_str = server.arg("ev");
+    String res = "ERROR: invalid command.";
+    if (ev_str == "forward") {
+        input_webapi = ev_str;
+    } else if (ev_str == "left" || ev_str == "stop" || ev_str == "right" || ev_str == "backward") {
+        input_webapi = ev_str;
+    } else {
+        input_webapi = "stop";
+    }
+    Serial.println(input_webapi);
+    server.send(200, "text/HTML", res);
+}
+
+bool is_key_down_webapi(String command) {
+    return (input_webapi == command);
+}
+
+void handleNotFound() {
+  server.send(404, "text/plain", "404 page not found.");
+}
+
 void motor_output(int output_l_f, int output_l_b, int output_r_f, int output_r_b) {
     //debug
-    Serial.println(String(output_l_f) + "," + String(output_l_b) + "," + String(output_r_f) + "," + String(output_r_b));
+    //Serial.println(String(output_l_f) + "," + String(output_l_b) + "," + String(output_r_f) + "," + String(output_r_b));
     //write
     ledcWrite(pwm_ch_l_f, (pwm_max * output_l_f) / 100);
     ledcWrite(pwm_ch_l_b, (pwm_max * output_l_b) / 100);
@@ -133,19 +173,25 @@ void motor_output(int output_l_f, int output_l_b, int output_r_f, int output_r_b
     ledcWrite(pwm_ch_r_b, (pwm_max * output_r_b) / 100);
 }
 
-int speed_l = 0;
-int speed_r = 0;
 void loop() {
+    // web i/f
+    if (WiFi.status()==WL_CONNECTED) {
+        server.handleClient();
+    } else {
+        Serial.println("ERROR: wifi disconnected!! restart...");
+        esp_restart();
+    }
+    
     // input check
-    bool input_forward = MyconRecv.is_key_down(key_Upward);
-    bool input_backward = MyconRecv.is_key_down(key_Downward) & (!input_forward);
-    bool input_left = MyconRecv.is_key_down(key_Left);
-    bool input_right = MyconRecv.is_key_down(key_Right) & (!input_left);
+    bool input_forward = (MyconRecv.is_key_down(key_Upward) | is_key_down_webapi("forward"));
+    bool input_backward = (MyconRecv.is_key_down(key_Downward) | is_key_down_webapi("backward")) & (!input_forward);
+    bool input_left = (MyconRecv.is_key_down(key_Left) | is_key_down_webapi("left"));
+    bool input_right = (MyconRecv.is_key_down(key_Right) | is_key_down_webapi("right")) & (!input_left);
 
     // calc speed
     if (input_forward && input_left) {
         // forward turn left
-        Serial.println("forward turn left");
+        //Serial.println("forward turn left");
         motor_output(
             pwm_turn_percent,
             0,
@@ -153,7 +199,7 @@ void loop() {
             0);
     } else if (input_forward && input_right) {
         // forward turn right
-        Serial.println("forward turn right");
+        //Serial.println("forward turn right");
         motor_output(
             pwm_run_percent,
             0,
@@ -161,7 +207,7 @@ void loop() {
             0);
     } else if (input_forward){
         // forward
-        Serial.println("forward");
+        //Serial.println("forward");
         motor_output(
             pwm_run_percent,
             0,
@@ -169,7 +215,7 @@ void loop() {
             0);
     } else if (input_backward && input_left) {
         // backward turn left
-        Serial.println("backward turn left");
+        //Serial.println("backward turn left");
         motor_output(
             0,
             pwm_turn_percent,
@@ -177,7 +223,7 @@ void loop() {
             pwm_run_percent);
     } else if (input_backward && input_right) {
         // backwardturn right
-        Serial.println("backwardturn right");
+        //Serial.println("backwardturn right");
         motor_output(
             0,
             pwm_run_percent,
@@ -185,7 +231,7 @@ void loop() {
             0);
     } else if (input_backward){
         // backward
-        Serial.println("backward");
+        //Serial.println("backward");
         motor_output(
             0,
             pwm_run_percent,
@@ -193,7 +239,7 @@ void loop() {
             pwm_run_percent);
     } else if (input_left) {
         // spin left
-        Serial.println("spin left");
+        //Serial.println("spin left");
         motor_output(
             0,
             pwm_spin_percent,
@@ -201,7 +247,7 @@ void loop() {
             0);
     } else if (input_right) {
         // spin right
-        Serial.println("spin right");
+        //Serial.println("spin right");
         motor_output(
             pwm_spin_percent,
             0,
@@ -209,10 +255,10 @@ void loop() {
             pwm_spin_percent);
     } else {
         // stop
-        Serial.println("stop");
+        //Serial.println("stop");
         motor_output(0, 0, 0, 0);
     }
 
     esp_task_wdt_reset();
-    delay(30);
+    delay(3);
 }
