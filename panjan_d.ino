@@ -24,7 +24,7 @@ const int pwm_freq = 50;
 const int pwm_bit = 8;
 const int pwm_max = (1 << pwm_bit);
 const int pwm_run_percent = 100;
-const int pwm_turn_percent = 70;
+const int pwm_turn_percent = 50;
 const int pwm_spin_percent = 30;
 
 WebServer server(80);
