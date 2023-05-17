@@ -98,6 +98,7 @@ void setup() {
         Serial.println("wifi connected.");
         current_ipaddr = WiFi.localIP().toString();
         Serial.println(current_ipaddr);
+        Serial.println(WiFi.macAddress());
         digitalWrite(pinLED, HIGH);
         delay(1*1000);
     } else {
