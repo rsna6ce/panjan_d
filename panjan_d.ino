@@ -24,7 +24,7 @@ const int pwm_freq = 50;
 const int pwm_bit = 8;
 const int pwm_max = (1 << pwm_bit);
 const int pwm_run_percent = 100;
-const int pwm_turn_percent = 50;
+const int pwm_turn_percent = 40;
 const int pwm_spin_percent = 30;
 
 WebServer server(80);
@@ -144,9 +144,9 @@ static String input_webapi = "";
 void handleApi() {
     String ev_str = server.arg("ev");
     String res = "ERROR: invalid command.";
-    if (ev_str == "forward") {
-        input_webapi = ev_str;
-    } else if (ev_str == "left" || ev_str == "stop" || ev_str == "right" || ev_str == "backward") {
+    if (ev_str == "forward" || ev_str == "forward_left" || ev_str == "forward_right" ||
+        ev_str == "left" || ev_str == "stop" || ev_str == "right" ||
+        ev_str == "backward" || ev_str == "backward_left" || ev_str == "backward_right") {
         input_webapi = ev_str;
     } else {
         input_webapi = "stop";
@@ -183,10 +183,22 @@ void loop() {
     }
     
     // input check
-    bool input_forward = (MyconRecv.is_key_down(key_Upward) | is_key_down_webapi("forward"));
-    bool input_backward = (MyconRecv.is_key_down(key_Downward) | is_key_down_webapi("backward")) & (!input_forward);
-    bool input_left = (MyconRecv.is_key_down(key_Left) | is_key_down_webapi("left"));
-    bool input_right = (MyconRecv.is_key_down(key_Right) | is_key_down_webapi("right")) & (!input_left);
+    bool input_forward = ( MyconRecv.is_key_down(key_Upward) |
+        is_key_down_webapi("forward") |
+        is_key_down_webapi("forward_left") |
+        is_key_down_webapi("forward_right"));
+    bool input_backward = (MyconRecv.is_key_down(key_Downward) |
+        is_key_down_webapi("backward") |
+        is_key_down_webapi("backward_right") |
+        is_key_down_webapi("backward_left")) & (!input_forward);
+    bool input_left = (MyconRecv.is_key_down(key_Left) |
+        is_key_down_webapi("left") |
+        is_key_down_webapi("forward_left") |
+        is_key_down_webapi("backward_left"));
+    bool input_right = (MyconRecv.is_key_down(key_Right) |
+        is_key_down_webapi("right") |
+        is_key_down_webapi("forward_right") |
+        is_key_down_webapi("backward_right")) & (!input_left);
 
     // calc speed
     if (input_forward && input_left) {
