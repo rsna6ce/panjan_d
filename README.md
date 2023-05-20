@@ -9,3 +9,4 @@
 ## How to build
 * See wiki
   * https://github.com/rsna6ce/panjan_d/wiki/how_to_build_j (日本語)
+  * Sorry. English version is not yet supported. Please use translation tool ...
