@@ -8,5 +8,6 @@
 
 ## How to build
 * See wiki
-  * https://github.com/rsna6ce/panjan_d/wiki/how_to_build_j (日本語)
-  * Sorry. English version is not yet supported. Please use translation tool ...
+  * (日本語) https://github.com/rsna6ce/panjan_d/wiki/how_to_build_j 
+  * (English) [English version is not yet supported. Please use google translate. click here](https://github-com.translate.goog/rsna6ce/panjan_d/wiki/how_to_build_j?_x_tr_sl=ja&_x_tr_tl=en&_x_tr_hl=ja&_x_tr_pto=wapp)
+      
