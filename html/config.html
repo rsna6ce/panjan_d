@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Microcontroller Parameter Setting</title>
+</head>
+<body>
+    <div>
+        <label>Run:</label>
+        <input type="number" id="runInput" min="0" max="100" value="{{RUN_VALUE}}">
+        <button onclick="sendParam('run')">Set</button>
+    </div>
+    <div>
+        <label>Turn:</label>
+        <input type="number" id="turnInput" min="0" max="100" value="{{TURN_VALUE}}">
+        <button onclick="sendParam('turn')">Set</button>
+    </div>
+    <div>
+        <label>Spin:</label>
+        <input type="number" id="spinInput" min="0" max="100" value="{{SPIN_VALUE}}">
+        <button onclick="sendParam('spin')">Set</button>
+    </div>
+
+    <script>
+        function sendParam(paramName) {
+            const input = document.getElementById(paramName + 'Input');
+            const value = parseInt(input.value);
+            
+            const url = `http://{{CURRENT_IPADDR}}/api?ev=config&name=${paramName}&val=${value}`;
+            
+            fetch(url, {
+                method: 'POST'
+            })
+            .then(response => response.text())
+            .then(data => {
+                alert(data);
+            })
+            .catch(error => {
+                alert('Error: ' + error.message);
+            });
+        }
+    </script>
+</body>
+</html>
