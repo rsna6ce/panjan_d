@@ -6,6 +6,7 @@
 #include "mycon.h"
 #include <esp_task_wdt.h>
 #include "wps_example.h"
+#include "SPIFFSIni.h"
 
 static MyconReceiver MyconRecv;
 
@@ -23,9 +24,9 @@ const int pwm_ch_l_b = 4;
 const int pwm_freq = 30;
 const int pwm_bit = 8;
 const int pwm_max = (1 << pwm_bit);
-const int pwm_run_percent = 100;
-const int pwm_turn_percent = 50;
-const int pwm_spin_percent = 45;
+static int pwm_run_percent = 100;
+static int pwm_turn_percent = 50;
+static int pwm_spin_percent = 50;
 
 WebServer server(80);
 static String current_ipaddr = "";
@@ -125,7 +126,24 @@ void setup() {
     Serial.println("start finished");
     delay(100);
 
+    // load config
+    Serial.println("loading config.ini ...");
+    SPIFFSIni config("/config.ini", true);
+    if (config.exist("run")) {
+        pwm_run_percent = config.read("run").toInt();
+    }
+    if (config.exist("turn")) {
+        pwm_turn_percent = config.read("turn").toInt();
+    }
+    if (config.exist("spin")) {
+        pwm_spin_percent = config.read("spin").toInt();
+    }
+    Serial.println("pwm_run_percent:" + String(pwm_run_percent));
+    Serial.println("pwm_turn_percent:" + String(pwm_turn_percent));
+    Serial.println("pwm_spin_percent:" + String(pwm_spin_percent));
+
     server.on("/", handleRoot);
+    server.on("/config", handleConfig);
     server.on("/api",handleApi);
     server.onNotFound(handleNotFound);
     server.begin();
@@ -141,6 +159,15 @@ void handleRoot() {
     server.send(200, "text/HTML", index_html);
 }
 
+void handleConfig() {
+    #include "config.html.h"
+    config_html.replace("{{CURRENT_IPADDR}}", current_ipaddr);
+    config_html.replace("{{RUN_VALUE}}", String(pwm_run_percent));
+    config_html.replace("{{TURN_VALUE}}", String(pwm_turn_percent));
+    config_html.replace("{{SPIN_VALUE}}", String(pwm_spin_percent));
+    server.send(200, "text/HTML", config_html);
+}
+
 static String input_webapi = "";
 void handleApi() {
     String ev_str = server.arg("ev");
@@ -148,9 +175,28 @@ void handleApi() {
     if (ev_str == "forward" || ev_str == "forward_left" || ev_str == "forward_right" ||
         ev_str == "left" || ev_str == "stop" || ev_str == "right" ||
         ev_str == "backward" || ev_str == "backward_left" || ev_str == "backward_right") {
+        res = "OK";
         input_webapi = ev_str;
+    } else if(ev_str == "config") {
+        String name_str = server.arg("name");
+        String val_str = server.arg("val");
+        SPIFFSIni config("/config.ini");
+        if (name_str == "run") {
+            pwm_run_percent = val_str.toInt();
+            res = "OK run[%] = " + String(pwm_run_percent);
+            config.write("run", String(pwm_run_percent));
+        } else if (name_str == "turn") {
+            pwm_turn_percent = val_str.toInt();
+            res = "OK turn[%] = " + String(pwm_turn_percent);
+            config.write("turn", String(pwm_turn_percent));
+        } else if (name_str == "spin") {
+            pwm_spin_percent = val_str.toInt();
+            res = "OK spin[%] = " + String(pwm_spin_percent);
+            config.write("spin", String(pwm_spin_percent));
+        }
     } else {
         input_webapi = "stop";
+        res = "OK";
     }
     Serial.println(input_webapi);
     server.send(200, "text/HTML", res);
